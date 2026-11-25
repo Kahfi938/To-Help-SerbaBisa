@@ -176,6 +176,7 @@ const DB_VERSION = "v6.0";
 let refreshInterval;
 
 // --- INISIALISASI ---
+// (Versi ini ditimpa oleh supabase-store.js yang dimuat setelah script.js)
 function initDB() {
     let dbVersion = localStorage.getItem('th_db_version');
     if (dbVersion !== DB_VERSION) {
@@ -185,11 +186,11 @@ function initDB() {
         localStorage.setItem('th_db_version', DB_VERSION);
     }
 
-    let existingUsers = JSON.parse(localStorage.getItem('th_users')) || [];
+    let existingUsers = getData('th_users') || [];
     defaultUsers.forEach(defUser => {
         if (!existingUsers.find(u => u.username === defUser.username)) existingUsers.push(defUser);
     });
-    localStorage.setItem('th_users', JSON.stringify(existingUsers));
+    setData('th_users', existingUsers);
 
     if (!localStorage.getItem('th_orders')) localStorage.setItem('th_orders', JSON.stringify([]));
     if (!localStorage.getItem('th_absensi')) localStorage.setItem('th_absensi', JSON.stringify([]));
@@ -277,7 +278,7 @@ function checkRoleForOTP() {
 
 function handleRegister(e) {
     e.preventDefault();
-    let users = JSON.parse(localStorage.getItem('th_users'));
+    let users = getData('th_users');
     const role = document.getElementById('reg-role').value;
     const username = document.getElementById('reg-username').value.trim().toLowerCase();
     const otp = document.getElementById('reg-otp').value;
@@ -293,14 +294,14 @@ function handleRegister(e) {
         username: username, password: document.getElementById('reg-password').value, role: role,
         status: role === 'Helpman' ? 'OFFLINE' : 'ACTIVE'
     });
-    localStorage.setItem('th_users', JSON.stringify(users));
+    setData('th_users', users);
     showToast("Registrasi Berhasil! Silakan Login.");
     toggleAuth('login');
 }
 
 function handleLogin(e) {
     e.preventDefault();
-    let users = JSON.parse(localStorage.getItem('th_users'));
+    let users = getData('th_users');
     const roleInput = document.getElementById('login-role').value;
     const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
     const passwordInput = document.getElementById('login-password').value;
@@ -755,8 +756,8 @@ function prosesPesanan(e, layananId) {
 // RENDER HALAMAN ADMIN CABANG
 // ==========================================
 function renderDashboardAdmin(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.wilayah === currentUser.wilayah);
-    let helpmans = JSON.parse(localStorage.getItem('th_users')).filter(u => u.role === 'Helpman');
+    let orders = getData('th_orders').filter(o => o.wilayah === currentUser.wilayah);
+    let helpmans = getData('th_users').filter(u => u.role === 'Helpman');
     let readyCount = helpmans.filter(h => h.status === 'READY').length;
     let pendingOrders = orders.filter(o => o.status === 'Menunggu Admin').length;
 
@@ -787,8 +788,8 @@ function renderDashboardAdmin(container) {
 }
 
 function renderAdminOrder(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.wilayah === currentUser.wilayah);
-    let helpmans = JSON.parse(localStorage.getItem('th_users')).filter(u => u.role === 'Helpman');
+    let orders = getData('th_orders').filter(o => o.wilayah === currentUser.wilayah);
+    let helpmans = getData('th_users').filter(u => u.role === 'Helpman');
 
     let tableHtml = `<div class="table-wrapper"><table><tr><th>ID Order</th><th>Pelanggan</th><th>Layanan & Rute</th><th>Status</th><th>Aksi</th></tr>`;
 
@@ -840,12 +841,12 @@ function renderAdminOrder(container) {
 }
 
 function renderAdminHelpman(container) {
-    let helpmans = JSON.parse(localStorage.getItem('th_users')).filter(u => u.role === 'Helpman');
+    let helpmans = getData('th_users').filter(u => u.role === 'Helpman');
     let html = `<div class="page-header"><h1>Data Helpman</h1></div>`;
     html += `<div class="table-wrapper"><table><tr><th>Nama Lengkap</th><th>Username</th><th>Status</th><th>Total Order Selesai</th><th>Rating</th></tr>`;
 
     helpmans.forEach(h => {
-        let ordersHelpman = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.helpman === h.username && o.status === 'Selesai');
+        let ordersHelpman = getData('th_orders').filter(o => o.helpman === h.username && o.status === 'Selesai');
         let badge = h.status === 'READY' ? 'badge-success' : 'badge-danger';
         html += `<tr>
             <td>${h.name || '-'}</td>
@@ -861,7 +862,7 @@ function renderAdminHelpman(container) {
 }
 
 function terimaOrder(id) {
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let o = orders.find(x => x.id === id);
     let idPendek = o.id ? o.id.split('-')[1].slice(-5) : 'XXXXX';
 
@@ -884,7 +885,7 @@ function terimaOrder(id) {
 
 function prosesTerimaOrder(e, id) {
     e.preventDefault();
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let idx = orders.findIndex(o => o.id === id);
     if (idx < 0 || orders[idx].status !== 'Menunggu Admin') {
         closeModal(); showToast('Pesanan sudah dibatalkan atau berubah status.', true);
@@ -893,7 +894,7 @@ function prosesTerimaOrder(e, id) {
     orders[idx].total = parseInt(document.getElementById('tarif-dasar').value);
     orders[idx].catatanAdmin = document.getElementById('catatan-admin').value;
     orders[idx].status = 'Mencari Helpman';
-    localStorage.setItem('th_orders', JSON.stringify(orders));
+    setData('th_orders', orders);
     closeModal();
     showToast("Order diterima.");
     navigate('order', 'Order Masuk');
@@ -901,7 +902,7 @@ function prosesTerimaOrder(e, id) {
 
 function tugaskanHelpman(id) {
     const helpmanUsername = document.getElementById(`select-hm-${id}`).value;
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let idx = orders.findIndex(o => o.id === id);
     if (idx < 0 || orders[idx].status !== 'Mencari Helpman') {
         showToast('Pesanan sudah dibatalkan atau berubah status.', true);
@@ -909,7 +910,7 @@ function tugaskanHelpman(id) {
     }
     orders[idx].status = 'Dikerjakan';
     orders[idx].helpman = helpmanUsername;
-    localStorage.setItem('th_orders', JSON.stringify(orders));
+    setData('th_orders', orders);
 
     // Notifikasi ke pelanggan & helpman
     const o = orders[idx];
@@ -921,7 +922,7 @@ function tugaskanHelpman(id) {
 }
 
 function lihatBuktiValidasi(id) {
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let o = orders.find(x => x.id === id);
     let html = `
         <div class="info-box">
@@ -937,10 +938,10 @@ function lihatBuktiValidasi(id) {
 }
 
 function validasiPekerjaan(id) {
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let idx = orders.findIndex(o => o.id === id);
     orders[idx].status = 'Selesai';
-    localStorage.setItem('th_orders', JSON.stringify(orders));
+    setData('th_orders', orders);
     closeModal();
     showToast("Pekerjaan divalidasi.");
     navigate('order', 'Order Masuk');
@@ -950,7 +951,7 @@ function validasiPekerjaan(id) {
 // RENDER HALAMAN HELPMAN
 // ==========================================
 function renderDashboardHelpman(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.helpman === currentUser.username);
+    let orders = getData('th_orders').filter(o => o.helpman === currentUser.username);
     let statusSaatIni = currentUser.status || 'OFFLINE';
 
     let html = `
@@ -985,7 +986,7 @@ function renderDashboardHelpman(container) {
 }
 
 function renderHelpmanOrder(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.helpman === currentUser.username);
+    let orders = getData('th_orders').filter(o => o.helpman === currentUser.username);
 
     let tableHtml = `<div class="table-wrapper"><table><tr><th>ID Order</th><th>Tanggal</th><th>Layanan & Rute</th><th>Catatan Admin</th><th>Status</th><th>Aksi</th></tr>`;
     orders.forEach(o => {
@@ -1013,7 +1014,7 @@ function renderHelpmanOrder(container) {
 }
 
 function renderHelpmanAbsensi(container) {
-    let absensi = JSON.parse(localStorage.getItem('th_absensi')).filter(a => a.username === currentUser.username);
+    let absensi = getData('th_absensi').filter(a => a.username === currentUser.username);
     let isAbsenHariIni = absensi.some(a => new Date(a.tanggal).toDateString() === new Date().toDateString() && a.tipe === 'MASUK');
 
     let html = `<div class="page-header"><h1>Absensi Harian</h1></div>`;
@@ -1038,7 +1039,7 @@ function renderHelpmanAbsensi(container) {
 }
 
 function renderHelpmanPenghasilan(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.helpman === currentUser.username && o.isPaid);
+    let orders = getData('th_orders').filter(o => o.helpman === currentUser.username && o.isPaid);
 
     let totalBulanIni = 0;
     let html = `<div class="page-header"><h1>Dashboard Penghasilan</h1><p class="text-muted">Rekap upah Anda yang sudah dibayar oleh Finance (Transparan).</p></div>`;
@@ -1086,10 +1087,10 @@ function renderHelpmanPenghasilan(container) {
 }
 
 function aksiHelpman(newStatus) {
-    let users = JSON.parse(localStorage.getItem('th_users'));
+    let users = getData('th_users');
     let idx = users.findIndex(u => u.username === currentUser.username);
     users[idx].status = newStatus;
-    localStorage.setItem('th_users', JSON.stringify(users));
+    setData('th_users', users);
     currentUser.status = newStatus;
     sessionStorage.setItem('th_session', JSON.stringify(currentUser));
     showToast(`Status: ${newStatus}`);
@@ -1097,9 +1098,9 @@ function aksiHelpman(newStatus) {
 }
 
 function absen(tipe) {
-    let absensi = JSON.parse(localStorage.getItem('th_absensi'));
+    let absensi = getData('th_absensi');
     absensi.push({ username: currentUser.username, tanggal: new Date().toISOString(), tipe: tipe });
-    localStorage.setItem('th_absensi', JSON.stringify(absensi));
+    setData('th_absensi', absensi);
     showToast(`Absen ${tipe} berhasil!`);
     navigate('absensi', 'Absensi');
 }
@@ -1136,7 +1137,7 @@ function prosesLaporSelesai(e, id) {
 
     const reader = new FileReader();
     reader.onload = function () {
-        let orders = JSON.parse(localStorage.getItem('th_orders'));
+        let orders = getData('th_orders');
         let idx = orders.findIndex(o => o.id === id);
         if (idx < 0 || orders[idx].status !== 'Dikerjakan') {
             closeModal(); showToast('Pesanan sudah dibatalkan atau berubah status.', true);
@@ -1147,7 +1148,7 @@ function prosesLaporSelesai(e, id) {
         orders[idx].pinjaman = pinjaman;
         orders[idx].catatanHelpman = catatan;
         orders[idx].buktiFoto = reader.result;
-        localStorage.setItem('th_orders', JSON.stringify(orders));
+        setData('th_orders', orders);
         closeModal(); showToast("Laporan dikirim."); navigate('order_saya', 'Order Saya');
     };
     reader.readAsDataURL(fileInput.files[0]);
@@ -1157,7 +1158,7 @@ function prosesLaporSelesai(e, id) {
 // RENDER HALAMAN FINANCE
 // ==========================================
 function renderFinanceDashboard(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.status === 'Selesai' && !o.isPaid);
+    let orders = getData('th_orders').filter(o => o.status === 'Selesai' && !o.isPaid);
     let totalTagihan = orders.reduce((sum, o) => sum + o.totalAkhir + o.pinjaman, 0);
 
     let html = `<div class="page-header"><h1>Ringkasan Keuangan</h1></div>`;
@@ -1170,7 +1171,7 @@ function renderFinanceDashboard(container) {
 }
 
 function renderFinanceRekap(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders')).filter(o => o.status === 'Selesai' && !o.isPaid);
+    let orders = getData('th_orders').filter(o => o.status === 'Selesai' && !o.isPaid);
 
     let html = `<div class="page-header"><h1>Rekap Gaji & Pembayaran</h1></div>`;
     html += `<div class="table-wrapper"><table>
@@ -1185,7 +1186,7 @@ function renderFinanceRekap(container) {
         </tr>`;
 
     orders.forEach(o => {
-        let helpmanData = JSON.parse(localStorage.getItem('th_users')).find(u => u.username === o.helpman);
+        let helpmanData = getData('th_users').find(u => u.username === o.helpman);
         let namaHelpman = helpmanData ? helpmanData.name : (o.helpman || '-');
         let totalTransferKeHelpman = o.totalAkhir + o.pinjaman;
         let idPendek = o.id ? o.id.split('-')[1].slice(-5) : 'XXXXX';
@@ -1206,7 +1207,7 @@ function renderFinanceRekap(container) {
 }
 
 function pilihTipePembayaran(id) {
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let o = orders.find(x => x.id === id);
     let totalTransfer = o.totalAkhir + o.pinjaman;
 
@@ -1250,7 +1251,7 @@ function updatePreviewBagi(id, tipe, totalAkhir, pinjaman) {
 function prosesPembayaran(e, id) {
     e.preventDefault();
     const tipe = document.querySelector('input[name="tipe-bagi"]:checked').value;
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let idx = orders.findIndex(o => o.id === id);
     let o = orders[idx];
 
@@ -1259,7 +1260,7 @@ function prosesPembayaran(e, id) {
     o.pendapatanTH = tipe === 'tim' ? o.totalAkhir * 0.2 : o.totalAkhir * 0.3;
     o.totalTransfer = o.upahBersih + o.pinjaman;
 
-    localStorage.setItem('th_orders', JSON.stringify(orders));
+    setData('th_orders', orders);
     closeModal(); showToast("Pembayaran Berhasil!"); navigate('rekap_gaji', 'Rekap Gaji');
 }
 
@@ -1267,7 +1268,7 @@ function prosesPembayaran(e, id) {
 // RENDER HALAMAN HEAD ADMIN
 // ==========================================
 function renderHeadAdminDashboard(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let totalSelesai = orders.filter(o => o.status === 'Selesai').length;
     let totalPendapatan = orders.filter(o => o.isPaid).reduce((sum, o) => sum + o.pendapatanTH, 0);
 
@@ -1282,13 +1283,13 @@ function renderHeadAdminDashboard(container) {
 }
 
 function renderHeadAdminLaporan(container) {
-    let orders = JSON.parse(localStorage.getItem('th_orders'));
+    let orders = getData('th_orders');
     let html = `<div class="page-header"><h1>Laporan Operasional</h1><p class="text-muted">Data seluruh cabang (Malang & Jember)</p></div>`;
     html += `<div class="table-wrapper"><table>
         <tr><th>ID Order</th><th>Tanggal</th><th>Layanan</th><th>Cabang</th><th>Status</th><th>Nama Helpman</th></tr>`;
 
     orders.forEach(o => {
-        let helpmanData = JSON.parse(localStorage.getItem('th_users')).find(u => u.username === o.helpman);
+        let helpmanData = getData('th_users').find(u => u.username === o.helpman);
         let namaHelpman = helpmanData ? helpmanData.name : (o.helpman || '-');
         let tgl = o.waktuPesan ? formatTanggal(o.waktuPesan) : '-';
         let idPendek = o.id ? o.id.split('-')[1].slice(-5) : 'XXXXX';
@@ -1314,6 +1315,7 @@ let chatInterval = null;
 let notifInterval = null;
 let lastNotifCount = 0;
 
+// (getData & setData ditimpa oleh supabase-store.js yang dimuat setelah script.js)
 function getData(key) { return JSON.parse(localStorage.getItem(key)) || []; }
 function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 function kodeOrder(o) { return o.id ? o.id.split('-')[1].slice(-5) : 'XXXXX'; }
@@ -1869,6 +1871,7 @@ function prosesUlasan(e, id) {
 }
 
 // --- START APP ---
+// (Versi ini ditimpa oleh supabase-store.js yang dimuat setelah script.js)
 window.onload = () => {
     initDB();
     const session = sessionStorage.getItem('th_session');
