@@ -8,6 +8,8 @@
 const SUPABASE_URL = "https://heemyevahpxqrnlanckq.supabase.co";
 const SUPABASE_KEY = "sb_publishable_4Z3CaCDjSqoLL9CWZHZosg_PtSSftCY";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+db.from("tugas").select("*").then(console.log);
+
 const pkt = (nama, harga, satuan, mode, awalan = '', extra = {}) => ({ nama, harga, satuan, mode, awalan, ...extra });
 const MULAI = 'Mulai dari';
 
