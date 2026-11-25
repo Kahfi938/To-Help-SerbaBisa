@@ -5,6 +5,9 @@
 //   'belanja' : Tempat beli + alamat antar (jastip)
 //   'online'  : Dikerjakan online, TANPA lokasi (joki tugas, editing, dll)
 //   'pilih'   : Pelanggan memilih sendiri apakah Helpman perlu datang atau online (Jasa Kustom)
+const SUPABASE_URL = "https://heemyevahpxqrnlanckq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_4Z3CaCDjSqoLL9CWZHZosg_PtSSftCY";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const pkt = (nama, harga, satuan, mode, awalan = '', extra = {}) => ({ nama, harga, satuan, mode, awalan, ...extra });
 const MULAI = 'Mulai dari';
 
