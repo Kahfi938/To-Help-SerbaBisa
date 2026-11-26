@@ -329,7 +329,27 @@ function logout() {
     window.scrollTo(0, 0);
 }
 
-function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+// Membuka dan menutup sidebar
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    if (sidebar.classList.contains('active')) {
+        closeSidebar();
+    } else {
+        sidebar.classList.add('active');
+        overlay.classList.add('active');
+    }
+}
+
+// Menutup sidebar
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+}
 
 // --- INIT DASHBOARD ---
 let currentUser = null;
@@ -374,6 +394,8 @@ function renderSidebar(role) {
 
 // --- ROUTER ---
 function navigate(pageId, title) {
+      // Tutup sidebar setelah memilih menu
+    closeSidebar();
     document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
     const activeMenu = document.getElementById(`menu-${pageId}`);
     if (activeMenu) activeMenu.classList.add('active');
