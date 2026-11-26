@@ -97,13 +97,67 @@ body {
 #profil .btn-hero { transition: all 0.3s ease; }
 #profil .btn-hero:hover { background: #1e40af !important; transform: translateY(-3px); box-shadow: 0 6px 15px rgba(30, 58, 138, 0.4); }
 
+/* SIDEBAR RESPONSIF UNTUK HP */
 @media (max-width: 992px) {
-    .hero-content { flex-direction: column; text-align: center; }
-    .hero-text h1 { font-size: 48px; }
-    .hero-features { justify-content: center; }
-    .hero-image { width: 100%; margin-top: 40px; }
-    .nav-right { display: none; }
-    .mobile-menu-btn { display: block; }
+
+    .sidebar {
+        width: 260px;
+        max-width: 85vw;
+        transform: translateX(-100%);
+        z-index: 1001;
+    }
+
+    /* Sidebar muncul saat dibuka */
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    /* Area dashboard memenuhi layar HP */
+    .main-area {
+        margin-left: 0;
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Tombol hamburger */
+    .hamburger {
+        display: block;
+    }
+
+    /* Tombol silang untuk menutup sidebar */
+    .sidebar-close {
+        display: block;
+        margin-left: auto;
+        background: transparent;
+        border: none;
+        color: #ffffff;
+        font-size: 22px;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    /* Area gelap di luar sidebar */
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: all 0.25s ease;
+    }
+
+    .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+}
+
+/* Sembunyikan tombol silang di desktop */
+.sidebar-close {
+    display: none;
 }
 @media (max-width: 768px) {
     .hero-text h1 { font-size: 36px; }
